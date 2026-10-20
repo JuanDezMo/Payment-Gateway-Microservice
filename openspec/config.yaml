@@ -1,0 +1,43 @@
+schema: spec-driven
+
+context: |
+  Proyecto: payment-gateway, microservicio externo que simula una pasarela de pagos
+  para ticket-api (plataforma de tickets). Contrato de origen: seccion 8 de
+  docs/business-rules.md del repo ticket_backend_api.
+
+  Stack: Java 21, Spring Boot 3.5.x, Gradle (Kotlin DSL) con wrapper, PostgreSQL 16,
+  Flyway, MapStruct, springdoc-openapi, Docker y docker-compose.
+  Pruebas: JUnit 5, AssertJ, Mockito, MockMvc, spring-security-test,
+  Testcontainers (PostgreSQL, no H2) y ArchUnit.
+
+  Idioma: codigo, nombres, mensajes de respuesta de la API, logs y tests en ingles.
+  Documentos (OpenSpec, README, docs) y comentarios necesarios en el codigo en espanol.
+
+  Arquitectura por capas (MVC de API, sin vista):
+  controller, dto, service, repository, model, mapper, security, exception, config.
+  Dependencias: controller -> service -> repository. El controller solo ve DTOs,
+  el service no conoce HTTP, las entidades no salen por la API. Inyeccion por
+  constructor, sin @Autowired en campos. Sin Lombok: DTOs como record.
+  Sin literales de negocio en service ni controller: estados en enums de model,
+  codigos y mensajes en exception/ErrorCode, maximo de intentos en
+  payment.max-error-attempts.
+
+  Reglas del dominio: no se valida Luhn; franquicias permitidas VISA, MASTERCARD y AMEX;
+  el resultado se decide en memoria por el final de la tarjeta (0000 rechazo,
+  9999 error simulado, otro aprobado); CARD_FLAGGED en el tercer error de la misma
+  reserva y tarjeta; cada intento valido se guarda; nunca se guarda numero completo,
+  CVV ni vencimiento; card_fingerprint con HMAC-SHA256 y CARD_FINGERPRINT_SECRET.
+  HTTP: APPROVED 200, REJECTED 402, ERROR 502, CARD_FLAGGED 422, formato o
+  franquicia 400, API key invalida 401.
+
+rules:
+  proposal:
+    - Incluir una seccion de fuera de alcance
+  specs:
+    - Describir comportamiento observable, sin nombres de clases ni librerias
+    - Los mensajes de respuesta de la API se escriben en ingles
+  design:
+    - Respetar la estructura por capas y las reglas de dependencia del contexto
+  tasks:
+    - Cada tarea indica como se verifica
+    - Respetar el idioma del contexto (codigo en ingles, documentos en espanol)
