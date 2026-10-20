@@ -185,6 +185,33 @@ class PaymentApiIntegrationTest extends PostgresIntegrationTest {
     }
 
     @Test
+    void concurrentErrorRequestsWithSameCardGetConsecutiveAttemptNumbers() throws Exception {
+        int threads = 2;
+        ExecutorService executor = Executors.newFixedThreadPool(threads);
+        CountDownLatch ready = new CountDownLatch(threads);
+        CountDownLatch go = new CountDownLatch(1);
+        List<Future<MvcResult>> futures = new ArrayList<>();
+        for (int i = 0; i < threads; i++) {
+            futures.add(executor.submit(() -> {
+                ready.countDown();
+                go.await();
+                return pay("r-conc-err", "VISA", "4111111111119999").andReturn();
+            }));
+        }
+        ready.await();
+        go.countDown();
+
+        for (Future<MvcResult> future : futures) {
+            assertThat(future.get().getResponse().getStatus()).isEqualTo(502);
+        }
+        executor.shutdown();
+
+        assertThat(repository.findAll()).extracting(PaymentAttempt::getAttemptNumber).containsExactlyInAnyOrder(1, 2);
+        assertThat(repository.findAll()).extracting(PaymentAttempt::getStatus)
+                .containsOnly(PaymentStatus.ERROR);
+    }
+
+    @Test
     void missingOrWrongApiKeyReturns401EvenWithInvalidBody() throws Exception {
         pay(null, body("r-a", "VISA", "4111111111114242")).andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status").value("UNAUTHORIZED")).andExpect(jsonPath("$.code").value("INVALID_API_KEY"))

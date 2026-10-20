@@ -1,0 +1,213 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Payment Gateway",
+        "description": "Simulated payment gateway. Card ending in 0000 is rejected, 9999 simulates an error, any other is approved.",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8080",
+            "description": "Generated server url"
+        }
+    ],
+    "paths": {
+        "/payments": {
+            "post": {
+                "tags": [
+                    "payment-controller"
+                ],
+                "summary": "Process a payment (simulated)",
+                "operationId": "create",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PaymentRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Payment approved (or already approved for the reservation)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaymentResponse"
+                                },
+                                "example": {
+                                    "status": "APPROVED",
+                                    "transactionId": "3f2b8c0e-6a1d-4e55-9a57-0d1c2b3a4f5e"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid format or card brand not allowed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaymentResponse"
+                                },
+                                "examples": {
+                                    "INVALID_REQUEST": {
+                                        "description": "INVALID_REQUEST",
+                                        "value": {
+                                            "status": "INVALID",
+                                            "code": "INVALID_REQUEST",
+                                            "message": "Invalid request"
+                                        }
+                                    },
+                                    "BRAND_NOT_ALLOWED": {
+                                        "description": "BRAND_NOT_ALLOWED",
+                                        "value": {
+                                            "status": "INVALID",
+                                            "code": "BRAND_NOT_ALLOWED",
+                                            "message": "Card brand not allowed. Use VISA, MASTERCARD or AMEX"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid API key",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaymentResponse"
+                                },
+                                "example": {
+                                    "status": "UNAUTHORIZED",
+                                    "code": "INVALID_API_KEY",
+                                    "message": "Invalid or missing API key"
+                                }
+                            }
+                        }
+                    },
+                    "402": {
+                        "description": "Payment rejected (card ending in 0000)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaymentResponse"
+                                },
+                                "example": {
+                                    "status": "REJECTED",
+                                    "code": "INSUFFICIENT_FUNDS",
+                                    "message": "Insufficient funds"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Third error with the same card and reservation; use another payment method",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaymentResponse"
+                                },
+                                "example": {
+                                    "status": "CARD_FLAGGED",
+                                    "code": "CARD_PROBLEM",
+                                    "message": "The card has problems, use another payment method"
+                                }
+                            }
+                        }
+                    },
+                    "502": {
+                        "description": "Simulated gateway error (card ending in 9999); retryable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PaymentResponse"
+                                },
+                                "example": {
+                                    "status": "ERROR",
+                                    "code": "GATEWAY_ERROR",
+                                    "message": "Error processing the payment, please try again"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "apiKey": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "CardData": {
+                "type": "object",
+                "properties": {
+                    "brand": {
+                        "type": "string"
+                    },
+                    "number": {
+                        "type": "string"
+                    },
+                    "expiry": {
+                        "type": "string"
+                    },
+                    "cvv": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "cvv",
+                    "expiry",
+                    "number"
+                ]
+            },
+            "PaymentRequest": {
+                "type": "object",
+                "properties": {
+                    "reservationId": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "amount": {
+                        "type": "number"
+                    },
+                    "card": {
+                        "$ref": "#/components/schemas/CardData"
+                    }
+                },
+                "required": [
+                    "amount",
+                    "card",
+                    "reservationId"
+                ]
+            },
+            "PaymentResponse": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string"
+                    },
+                    "transactionId": {
+                        "type": "string"
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "securitySchemes": {
+            "apiKey": {
+                "type": "http",
+                "scheme": "bearer"
+            }
+        }
+    }
+}

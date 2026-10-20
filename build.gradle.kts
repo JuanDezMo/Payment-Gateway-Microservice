@@ -1,5 +1,6 @@
 plugins {
     java
+    jacoco
     id("org.springframework.boot") version "3.5.6"
     id("io.spring.dependency-management") version "1.1.7"
 }
@@ -52,4 +53,31 @@ tasks.withType<Test> {
     useJUnitPlatform()
     // Docker 29+ rechaza la API 1.32 que usa por defecto docker-java (Testcontainers 1.21)
     systemProperty("api.version", "1.44")
+}
+
+// Cobertura minima de lineas; configurable con -PcoverageMinimum=0.9 o en gradle.properties
+val coverageMinimum = (findProperty("coverageMinimum") as String?)?.toBigDecimal() ?: "0.80".toBigDecimal()
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+tasks.jacocoTestCoverageVerification {
+    dependsOn(tasks.test)
+    violationRules {
+        rule {
+            limit {
+                counter = "LINE"
+                minimum = coverageMinimum
+            }
+        }
+    }
+}
+
+tasks.check {
+    dependsOn(tasks.jacocoTestReport, tasks.jacocoTestCoverageVerification)
 }

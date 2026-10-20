@@ -82,6 +82,18 @@ Comportamientos a tener en cuenta:
 
 Con el servicio levantado: `http://localhost:8080/v3/api-docs` (JSON) y `http://localhost:8080/swagger-ui.html`. Este es el contrato que consume `ticket-api` para su mock.
 
+### Mock del contrato
+
+`docs/openapi.json` es el contrato exportado. Para desarrollar clientes sin levantar el servicio real:
+
+```bash
+docker compose -f docs/docker-compose.mock.yml up -d     # http://localhost:4010
+curl -X POST localhost:4010/payments -H "Content-Type: application/json" \
+  -H "Prefer: code=402" -d '{...}'                        # elige la respuesta: 200, 400, 401, 402, 422 o 502
+```
+
+Sin el header `Prefer`, responde `200`. Si cambia el contrato, vuelve a exportar `openapi.json` desde `/v3/api-docs`.
+
 ### Salud
 
 `GET /actuator/health` no requiere API key.
@@ -114,6 +126,15 @@ Respuesta esperada: `200` con `{"status":"APPROVED","transactionId":"..."}`.
 ```
 
 Requiere Docker: las pruebas de integración usan PostgreSQL real con Testcontainers. Incluye `ArchitectureTest` (ArchUnit), que verifica las reglas de capas del proyecto.
+
+### Cobertura (JaCoCo)
+
+```bash
+./gradlew check                              # tests + reporte + verificación del mínimo
+./gradlew check -PcoverageMinimum=0.90       # cambia el mínimo de cobertura de líneas
+```
+
+El mínimo por defecto es `0.80`. El reporte HTML queda en `build/reports/jacoco/test/html/index.html`.
 
 ## Estructura
 

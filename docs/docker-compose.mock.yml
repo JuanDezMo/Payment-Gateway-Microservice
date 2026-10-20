@@ -1,0 +1,9 @@
+# Mock del contrato para desarrollar clientes (p. ej. ticket-api) sin levantar el servicio real
+services:
+  payment-gateway-mock:
+    image: stoplight/prism:4
+    command: mock -h 0.0.0.0 -p 4010 --dynamic=false /contract/openapi.json
+    volumes:
+      - ./openapi.json:/contract/openapi.json:ro
+    ports:
+      - "4010:4010"
