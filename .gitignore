@@ -1,5 +1,6 @@
-# Gradle
+# Gradle / Kotlin DSL
 .gradle/
+.kotlin/
 build/
 !gradle/wrapper/gradle-wrapper.jar
 
@@ -7,6 +8,12 @@ build/
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+*.p12
+*.jks
+*.keystore
+application-local.*
 
 # IDEs
 .idea/
@@ -17,8 +24,13 @@ build/
 .classpath
 .project
 .settings/
-out/
-bin/
+/out/
+/bin/
+.factorypath
+.apt_generated/
+nbproject/
+*.swp
+*~
 
 # Sistema operativo
 .DS_Store
@@ -27,6 +39,9 @@ Thumbs.db
 # Logs y temporales
 *.log
 *.tmp
+
+# Volcados de la JVM
+*.hprof
 
 # Herramientas de IA locales
 .claude/
